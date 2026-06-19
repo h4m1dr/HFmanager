@@ -39,7 +39,7 @@ Optional KV storage (state/data)
 # 1️⃣ Clone the Repository
 
 ```bash id="c1"
-git clone https://github.com/USERNAME/HFmanager.git
+git clone https://github.com/h4m1dr/HFmanager
 cd HFmanager
 ```
 
