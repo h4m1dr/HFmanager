@@ -1,224 +1,219 @@
 # 🚀 HFmanager — Telegram Bot + Cloudflare Worker Dashboard
 
-HFmanager is a lightweight system for managing **Spaces / Instances / Jobs** through a **Telegram-based UI**, powered by **Cloudflare Workers**.
+HFmanager is a lightweight **Telegram-controlled management system** running on **Cloudflare Workers**.
 
-It is designed to be:
-
-* ⚡ Fast
-* ☁️ Serverless
-* 📱 Telegram-native UI
-* 🔐 Secure (no exposed secrets)
+It provides a simple UI inside Telegram to manage Spaces/Instances.
 
 ---
 
-# 🧠 Project Overview
+# 🧠 Architecture
 
-HFmanager works like this:
-
-```text id="arch"
+```text
 Telegram Bot (UI)
         ↓ webhook
-Cloudflare Worker (backend API)
+Cloudflare Worker (Backend API)
         ↓
-Optional KV storage (state/data)
-```
-
-* Telegram = user interface
-* Worker = backend logic
-* Cloudflare = runtime
+Cloudflare KV (State Storage)
+````
 
 ---
 
-# ⚙️ Deployment (ONLY METHOD YOU NEED)
+# ⚙️ Full Setup (ZERO CONFUSION VERSION)
 
-> This is the **single standard way** to run the project:
-> Clone → Configure → Deploy to Cloudflare
+## 1️⃣ Clone project
 
----
-
-# 1️⃣ Clone the Repository
-
-```bash id="c1"
+```bash
 git clone https://github.com/h4m1dr/HFmanager
 cd HFmanager
 ```
 
 ---
 
-# 2️⃣ Install Dependencies
+## 2️⃣ Install dependencies
 
-```bash id="c2"
+```bash
 npm install
 ```
 
 ---
 
-# 3️⃣ Configure Project
+## 3️⃣ Configure wrangler
 
-Create or edit:
+Edit:
 
-```text id="c3"
+```text
 wrangler.toml
 ```
 
-```toml id="c4"
+```toml
 name = "hfmanager"
 main = "src/index.js"
 compatibility_date = "2026-06-19"
+
+compatibility_flags = ["nodejs_compat"]
+
+kv_namespaces = [
+  { binding = "HF_SPACES_KV", id = "YOUR_KV_ID" }
+]
 ```
 
 ---
 
-# 4️⃣ Login to Cloudflare
+## 4️⃣ Create KV (if not created)
 
-```bash id="c5"
-npm install -g wrangler
-wrangler login
+```bash
+wrangler kv namespace create HF_SPACES_KV
 ```
+
+Copy ID into `wrangler.toml`
 
 ---
 
-# 5️⃣ Add Telegram Bot Secret (IMPORTANT)
+## 5️⃣ Set secrets
 
-Never put tokens in code or GitHub.
-
-```bash id="c6"
+```bash
 wrangler secret put TELEGRAM_BOT_TOKEN
-```
-
-Paste your token:
-
-```text id="c7"
-123456:ABCDEF_your_bot_token_here
+wrangler secret put ADMIN_ID
 ```
 
 ---
 
-# 6️⃣ Deploy to Cloudflare
+# 🚀 6️⃣ Deploy (ONE COMMAND)
 
-```bash id="c8"
+```bash
 wrangler deploy
 ```
 
-After deployment, you will get:
+You will get:
 
-```text id="c9"
-https://hfmanager.<your-subdomain>.workers.dev
+```text
+https://hfmanager.<subdomain>.workers.dev
 ```
 
 ---
 
-# 🔗 7️⃣ Connect Telegram Bot (Webhook)
+# 🤖 7️⃣ AUTO WEBHOOK SETUP (IMPORTANT)
 
-Now link Telegram to your Worker:
+After deploy, run:
 
-```bash id="c10"
-https://api.telegram.org/bot<BOT_TOKEN>/setWebhook?url=https://hfmanager.<your-subdomain>.workers.dev
-```
-
-Example:
-
-```bash id="c11"
-https://api.telegram.org/bot123456:ABC/setWebhook?url=https://hfmanager.workers.dev
+```bash
+curl "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook?url=https://hfmanager.<subdomain>.workers.dev/webhook"
 ```
 
 ---
 
-# 📱 8️⃣ Test the Bot
+# 🔁 8️⃣ VERIFY WEBHOOK
 
-Open Telegram and send:
+```bash
+curl "https://api.telegram.org/bot<BOT_TOKEN>/getWebhookInfo"
+```
 
-```text id="c12"
+You must see:
+
+```json
+"url": "https://hfmanager.../webhook"
+```
+
+---
+
+# 📱 9️⃣ Test Bot
+
+Open Telegram:
+
+```text
 /start
 ```
 
-If everything is correct, you will see:
-
-```text id="c13"
-🧠 HFmanager Dashboard
-
-📊 Status: Online
-📡 Spaces: 0
-
-[📊 Status] [📡 Spaces]
-[➕ Add] [⚙ Settings]
-```
-
 ---
 
-# 🧩 What this project does
+# 🧠 Expected Behavior
 
-HFmanager is a control panel for:
-
-* Creating and managing “Spaces”
-* Tracking instances/jobs
-* Simple admin actions through Telegram UI
-* Lightweight orchestration layer on Cloudflare Workers
+* Bot responds with dashboard
+* Spaces list shows
+* Wake / Add works
+* No errors in wrangler tail
 
 ---
 
 # 🔐 Security Model
 
-* ❌ No tokens in GitHub
-* ❌ No server required
-* ✅ Secrets stored in Cloudflare (`wrangler secret`)
-* ✅ Telegram communicates via webhook only
+* Tokens stored ONLY in Cloudflare secrets
+* No `.env` in repo
+* No exposed credentials
+* Webhook-only communication
 
 ---
 
-# 🔁 Development Workflow
+# 🧪 Debug Mode
 
-```text id="c14"
+If something fails:
+
+```bash
+wrangler tail
+```
+
+---
+
+# 🚨 Common Issues
+
+### ❌ Bot not responding
+
+→ webhook not set to `/webhook`
+
+### ❌ 500 error
+
+→ missing KV binding
+
+### ❌ Access denied
+
+→ ADMIN_ID mismatch
+
+---
+
+# 🔁 Dev Workflow
+
+```text
 edit code
-   ↓
 git commit
-   ↓
 git push
-   ↓
 wrangler deploy
-   ↓
-test in Telegram (/start)
+test in Telegram
 ```
 
 ---
 
-# 🚫 .gitignore
+# ⚡ Quick Links
 
-```gitignore id="c15"
-node_modules
-.env
-.wrangler
-dist
+Bot:
+
 ```
-
----
-
-# ⚡ Quick Access
-
-Your bot link:
-
-```text id="c16"
 https://t.me/<YOUR_BOT_USERNAME>
+```
+
+Worker:
+
+```
+https://hfmanager.<subdomain>.workers.dev
 ```
 
 ---
 
 # 🔥 Summary
 
-HFmanager is:
-
 * Telegram = UI layer
 * Cloudflare Worker = backend
-* Wrangler = deployment tool
-* Secrets = secure environment variables
+* KV = storage
+* Wrangler = deploy tool
+* Webhook = `/webhook` endpoint ONLY
 
 ---
 
-If you want next step, I can upgrade this README to:
+# 🚀 Next upgrades (optional)
 
-* 🔥 multi-user SaaS architecture
-* 🔥 KV-based dashboard persistence
-* 🔥 admin panel (outside Telegram)
-* 🔥 full production scaling guide
+If you want next version:
 
-Just say 👍
+* multi-user system
+* real admin panel
+* analytics dashboard
+* job queue system
+* auto healing (self restart spaces)
