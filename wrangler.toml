@@ -2,5 +2,6 @@ name = "hfmanager"
 main = "src/index.js"
 compatibility_date = "2026-06-19"
 
-[vars]
-TELEGRAM_BOT_TOKEN = "8525306999:AAGlbnU60KOnGlAIdZbVY17fdTFATZo5398"
+kv_namespaces = [
+  { binding = "HF_SPACES_KV", id = "REPLACE_WITH_YOUR_KV_ID" }
+]

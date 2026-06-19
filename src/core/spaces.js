@@ -1,136 +1,75 @@
-// HFmanager - Core Space Manager
-// Responsible for checking, waking, and monitoring HuggingFace Spaces
-
 export class SpaceManager {
   constructor(kv) {
     this.kv = kv;
+    this.prefix = "space:";
   }
 
-  // =========================
-  // Get all spaces
-  // =========================
-  async listSpaces() {
-    return await this.kv.getSpaces();
-  }
+  async getAll() {
+    const res = await this.kv.list(this.prefix);
 
-  // =========================
-  // Simple health check (ping)
-  // =========================
-  async pingSpace(space) {
-    try {
-      const res = await fetch(space.url, {
-        method: "GET",
-        headers: {
-          "User-Agent": "HFmanager-bot"
-        }
-      });
+    const spaces = [];
 
-      const isOk = res.status >= 200 && res.status < 500;
-
-      await this.kv.updateStatus(
-        space.name,
-        isOk ? "active" : "error"
-      );
-
-      return {
-        name: space.name,
-        status: isOk ? "active" : "error",
-        http: res.status
-      };
-
-    } catch (err) {
-      await this.kv.updateStatus(space.name, "offline");
-
-      return {
-        name: space.name,
-        status: "offline",
-        error: err.message
-      };
-    }
-  }
-
-  // =========================
-  // Wake a Space (force trigger)
-  // =========================
-  async wakeSpace(space) {
-    try {
-      // first lightweight ping
-      const res = await fetch(space.url, {
-        method: "GET"
-      });
-
-      const status = res.ok ? "woken" : "failed";
-
-      await this.kv.updateStatus(space.name, status);
-
-      return {
-        name: space.name,
-        status,
-        http: res.status
-      };
-
-    } catch (err) {
-      await this.kv.updateStatus(space.name, "offline");
-
-      return {
-        name: space.name,
-        status: "offline",
-        error: err.message
-      };
-    }
-  }
-
-  // =========================
-  // Check all spaces
-  // =========================
-  async checkAll() {
-    const spaces = await this.kv.getSpaces();
-
-    const results = [];
-
-    for (const space of spaces) {
-      const result = await this.pingSpace(space);
-      results.push(result);
+    for (const key of res.keys) {
+      const data = await this.kv.get(key.name);
+      if (data) spaces.push(data);
     }
 
-    return results;
+    return spaces;
   }
 
-  // =========================
-  // Wake all spaces (manual trigger)
-  // =========================
-  async wakeAll() {
-    const spaces = await this.kv.getSpaces();
-
-    const results = [];
-
-    for (const space of spaces) {
-      const result = await this.wakeSpace(space);
-      results.push(result);
-    }
-
-    return results;
+  async get(id) {
+    return await this.kv.get(this.prefix + id);
   }
 
-  // =========================
-  // Get summary report
-  // =========================
+  async add(space) {
+    const key = this.prefix + space.id;
+    await this.kv.set(key, space);
+    return space;
+  }
+
+  async remove(id) {
+    return await this.kv.delete(this.prefix + id);
+  }
+
+  async wake(id) {
+    const space = await this.get(id);
+
+    if (!space) return null;
+
+    space.status = "online";
+    space.lastWake = Date.now();
+
+    await this.kv.set(this.prefix + id, space);
+
+    return space;
+  }
+
+  async getAllSpaces() {
+    return this.getAll();
+  }
+
   async getReport() {
-    const spaces = await this.kv.getSpaces();
+    const spaces = await this.getAll();
 
-    const report = {
-      total: spaces.length,
-      active: 0,
-      error: 0,
-      offline: 0
+    return {
+      status: "online",
+      totalSpaces: spaces.length,
+      online: spaces.filter(s => s.status === "online").length,
+      offline: spaces.filter(s => s.status === "offline").length,
+      timestamp: Date.now()
     };
+  }
+
+  async wakeAll() {
+    const spaces = await this.getAll();
 
     for (const s of spaces) {
-      if (s.status === "active") report.active++;
-      else if (s.status === "error") report.error++;
-      else report.offline++;
+      await this.wake(s.id);
     }
 
-    return report;
+    return {
+      success: true,
+      triggered: spaces.length
+    };
   }
 }

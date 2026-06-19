@@ -1,23 +1,23 @@
-import { createTelegramBot } from "./bot/telegram";
-import { KVStore } from "./utils/kv";
-import { SpaceManager } from "./core/spaces";
+import { createTelegramBot } from "./bot/telegram.js";
+import { KVStore } from "./utils/kv.js";
+import { SpaceManager } from "./core/spaces.js";
 import { webhookCallback } from "grammy";
 
 export default {
   async fetch(request, env, ctx) {
-    
+
     // =========================
     // Init KV wrapper
     // =========================
     const kv = new KVStore(env.HF_SPACES_KV);
 
     // =========================
-    // Init Space Manager
+    // Init core manager
     // =========================
     const manager = new SpaceManager(kv);
 
     // =========================
-    // Init Telegram Bot
+    // Init Telegram bot
     // =========================
     const bot = createTelegramBot(env, kv);
 
@@ -33,20 +33,22 @@ export default {
     }
 
     // =========================
-    // STATUS ALL SPACES (API)
+    // STATUS API
     // =========================
     if (url.pathname === "/api/status") {
       const report = await manager.getReport();
+
       return new Response(JSON.stringify(report, null, 2), {
         headers: { "Content-Type": "application/json" }
       });
     }
 
     // =========================
-    // WAKE ALL SPACES (API)
+    // WAKE ALL SPACES
     // =========================
     if (url.pathname === "/api/wake-all") {
       const result = await manager.wakeAll();
+
       return new Response(JSON.stringify(result, null, 2), {
         headers: { "Content-Type": "application/json" }
       });
@@ -59,6 +61,6 @@ export default {
       return handleUpdate(request, env, ctx);
     }
 
-    return new Response("HFmanager is running 🚀");
+    return new Response("HFmanager running");
   }
 };
