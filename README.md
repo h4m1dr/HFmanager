@@ -1,7 +1,3 @@
-اوکی، اینو برات تبدیل کردم به یه README واقعی، تمیز، حرفه‌ای، انگلیسی، و فقط با **یک مسیر ساده و واقعی (Clone → Deploy to Cloudflare)** 👇
-
----
-
 # 🚀 HFmanager — Telegram Bot + Cloudflare Worker Dashboard
 
 HFmanager is a lightweight system for managing **Spaces / Instances / Jobs** through a **Telegram-based UI**, powered by **Cloudflare Workers**.
