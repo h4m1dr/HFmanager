@@ -3,5 +3,5 @@ main = "src/index.js"
 compatibility_date = "2026-06-19"
 
 kv_namespaces = [
-  { binding = "HF_SPACES_KV", id = "REPLACE_WITH_YOUR_KV_ID" }
+  { binding = "HF_SPACES_KV", id = "98237ce72513435fab77b317cdfb992e" }
 ]
